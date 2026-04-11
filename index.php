@@ -1,5 +1,4 @@
 <?php
-// index.php — Home / Landing Page
 require_once 'includes/auth.php';
 require_once 'includes/db.php';
 
