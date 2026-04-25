@@ -1,5 +1,5 @@
 <?php
-// pages/dashboard.php — Player Dashboard
+
 require_once '../includes/auth.php';
 require_once '../includes/db.php';
 
@@ -7,12 +7,10 @@ requireLogin();
 $user = getCurrentUser();
 $base = BASE_PATH;
 
-// Get full player profile
 $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
 $stmt->execute([$user['id']]);
 $profile = $stmt->fetch();
 
-// Get upcoming registered tournaments (max 5)
 $stmt = $pdo->prepare("
     SELECT t.name, t.location, t.start_date, t.end_date, t.surface, t.category, t.ranking_points, r.status
     FROM registrations r
@@ -24,12 +22,10 @@ $stmt = $pdo->prepare("
 $stmt->execute([$user['id']]);
 $upcomingRegistrations = $stmt->fetchAll();
 
-// Total tournaments registered for
 $stmt = $pdo->prepare("SELECT COUNT(*) as total FROM registrations WHERE user_id = ?");
 $stmt->execute([$user['id']]);
 $totalRegistrations = $stmt->fetch()['total'];
 
-// Open tournaments with available slots
 $openTournaments = $pdo->query("
     SELECT t.*,
            t.total_slots - (SELECT COUNT(*) FROM registrations r WHERE r.tournament_id = t.id AND r.status = 'Confirmed') AS slots_left
@@ -50,7 +46,6 @@ require_once '../includes/header.php';
     <p class="text-gray-400 mt-1">Here's your season overview.</p>
 </div>
 
-<!-- Stat cards -->
 <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
     <div class="bg-atp-card border border-atp-border rounded-2xl p-5">
         <p class="text-gray-400 text-xs uppercase tracking-widest mb-1">ATP Ranking</p>
@@ -75,10 +70,8 @@ require_once '../includes/header.php';
     </div>
 </div>
 
-<!-- Two column layout -->
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
-    <!-- My upcoming schedule -->
     <div>
         <div class="flex justify-between items-center mb-4">
             <h2 class="font-display text-2xl text-white tracking-wide">MY UPCOMING SCHEDULE</h2>
@@ -110,7 +103,6 @@ require_once '../includes/header.php';
         <?php endif; ?>
     </div>
 
-    <!-- Open tournaments -->
     <div>
         <div class="flex justify-between items-center mb-4">
             <h2 class="font-display text-2xl text-white tracking-wide">OPEN FOR ENTRY</h2>
