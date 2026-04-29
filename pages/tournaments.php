@@ -1,4 +1,5 @@
 <?php
+
 require_once '../includes/auth.php';
 require_once '../includes/db.php';
 
@@ -23,6 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['tournament_id'])) {
     } elseif ($tournament['slots_left'] <= 0) {
         setFlash('error', 'Sorry, this tournament is full.');
     } else {
+        // Check if THIS specific player is already registered
         $stmt = $pdo->prepare("SELECT id FROM registrations WHERE user_id = ? AND tournament_id = ?");
         $stmt->execute([$user['id'], $tournamentId]);
         if ($stmt->fetch()) {
@@ -36,20 +38,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['tournament_id'])) {
     redirect('/pages/tournaments.php');
 }
 
+
 if (isset($_GET['withdraw'])) {
     $tournamentId = (int) $_GET['withdraw'];
-    $stmt = $pdo->prepare("UPDATE registrations SET status = 'Withdrawn' WHERE user_id = ? AND tournament_id = ?");
+    $stmt = $pdo->prepare("
+        UPDATE registrations
+        SET status = 'Withdrawn'
+        WHERE user_id = ? AND tournament_id = ?
+    ");
     $stmt->execute([$user['id'], $tournamentId]);
     setFlash('info', 'You have withdrawn from the tournament.');
     redirect('/pages/tournaments.php');
 }
+
+
+if (isset($_GET['open_tournament']) && $user['role'] === 'admin') {
+    $tournamentId = (int) $_GET['open_tournament'];
+    $stmt = $pdo->prepare("UPDATE tournaments SET status = 'Open' WHERE id = ?");
+    $stmt->execute([$tournamentId]);
+    setFlash('success', 'Tournament is now open for registration.');
+    redirect('/pages/tournaments.php');
+}
+
 
 $filterStatus   = $_GET['status']   ?? '';
 $filterSurface  = $_GET['surface']  ?? '';
 $filterCategory = $_GET['category'] ?? '';
 
 $where  = [];
-$params = [$user['id']]; 
+$params = [$user['id']];
 
 if ($filterStatus)   { $where[] = "t.status = ?";   $params[] = $filterStatus; }
 if ($filterSurface)  { $where[] = "t.surface = ?";  $params[] = $filterSurface; }
@@ -59,7 +76,7 @@ $sql = "
     SELECT t.*,
            (SELECT COUNT(*) FROM registrations r WHERE r.tournament_id = t.id AND r.status = 'Confirmed') AS registered_count,
            t.total_slots - (SELECT COUNT(*) FROM registrations r WHERE r.tournament_id = t.id AND r.status = 'Confirmed') AS slots_left,
-           (SELECT COUNT(*) FROM registrations r WHERE r.tournament_id = t.id AND r.user_id = ?) AS is_registered
+           (SELECT COUNT(*) FROM registrations r WHERE r.tournament_id = t.id AND r.user_id = ? AND r.status = 'Confirmed') AS is_registered
     FROM tournaments t
 ";
 
@@ -167,27 +184,43 @@ require_once '../includes/header.php';
                 </div>
             </div>
 
-            <div class="sm:w-32 flex-shrink-0">
+            <div class="sm:w-36 flex-shrink-0 flex flex-col gap-2">
+
                 <?php if ($t['is_registered'] && $t['status'] !== 'Completed'): ?>
+                    <!-- Withdraw (only affects current logged-in player) -->
                     <a href="<?= $base ?>/pages/tournaments.php?withdraw=<?= $t['id'] ?>"
                        onclick="return confirm('Are you sure you want to withdraw?')"
                        class="block w-full text-center text-sm border border-red-700/50 text-red-400 hover:bg-red-900/30 px-4 py-2 rounded-xl transition-colors">
                         Withdraw
                     </a>
+
                 <?php elseif ($t['status'] === 'Open' && $t['slots_left'] > 0 && !$t['is_registered']): ?>
+                    <!-- Register -->
                     <form method="POST" action="<?= $base ?>/pages/tournaments.php">
                         <input type="hidden" name="tournament_id" value="<?= $t['id'] ?>">
                         <button type="submit" class="w-full bg-atp-green hover:bg-green-600 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors">
                             Register
                         </button>
                     </form>
+
                 <?php elseif ($t['slots_left'] <= 0): ?>
                     <span class="block w-full text-center text-xs text-red-400 border border-red-900/40 px-4 py-2 rounded-xl">Full</span>
+
                 <?php elseif ($t['status'] === 'Upcoming'): ?>
                     <span class="block w-full text-center text-xs text-gray-500 border border-atp-border px-4 py-2 rounded-xl">Not Open Yet</span>
+                    <?php if ($user['role'] === 'admin'): ?>
+                
+                    <a href="<?= $base ?>/pages/tournaments.php?open_tournament=<?= $t['id'] ?>"
+                       onclick="return confirm('Open this tournament for player registration?')"
+                       class="block w-full text-center text-xs bg-yellow-500/20 text-yellow-300 border border-yellow-500/30 hover:bg-yellow-500/30 px-4 py-2 rounded-xl transition-colors font-medium">
+                        ⚙ Open Now
+                    </a>
+                    <?php endif; ?>
+
                 <?php else: ?>
                     <span class="block w-full text-center text-xs text-gray-500 border border-atp-border px-4 py-2 rounded-xl"><?= $t['status'] ?></span>
                 <?php endif; ?>
+
             </div>
 
         </div>
