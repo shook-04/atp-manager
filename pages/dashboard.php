@@ -11,6 +11,9 @@ $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
 $stmt->execute([$user['id']]);
 $profile = $stmt->fetch();
 
+$allTournaments  = [];
+$openTournaments = [];
+
 
 if ($user['role'] === 'admin') {
 
