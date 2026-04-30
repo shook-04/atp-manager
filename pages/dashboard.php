@@ -7,7 +7,6 @@ requireLogin();
 $user = getCurrentUser();
 $base = BASE_PATH;
 
-// Get full profile
 $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
 $stmt->execute([$user['id']]);
 $profile = $stmt->fetch();
@@ -47,6 +46,7 @@ if ($user['role'] === 'admin') {
         FROM registrations r
         JOIN tournaments t ON r.tournament_id = t.id
         WHERE r.user_id = ? AND r.status = 'Confirmed'
+          AND t.end_date >= CURDATE()
         ORDER BY t.start_date ASC LIMIT 5
     ");
     $stmt->execute([$user['id']]);
@@ -84,7 +84,7 @@ require_once '../includes/header.php';
     </a>
 </div>
 
-<!-- Admin Stat Cards -->
+
 <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
     <div class="bg-atp-card border border-atp-border rounded-2xl p-5">
         <p class="text-gray-400 text-xs uppercase tracking-widest mb-1">Tournaments</p>
@@ -111,7 +111,6 @@ require_once '../includes/header.php';
 
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
 
-    <!-- Status breakdown with progress bars -->
     <div class="lg:col-span-1">
         <h2 class="font-display text-2xl text-white tracking-wide mb-4">TOURNAMENT STATUS</h2>
         <div class="bg-atp-card border border-atp-border rounded-2xl p-5 space-y-4">
@@ -140,7 +139,7 @@ require_once '../includes/header.php';
         </div>
     </div>
 
-   
+    
     <div class="lg:col-span-2">
         <h2 class="font-display text-2xl text-white tracking-wide mb-4">RECENT REGISTRATIONS</h2>
         <?php if (empty($recentRegistrations)): ?>
