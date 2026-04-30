@@ -55,3 +55,43 @@ A tennis tournament management system inspired by the ATP Tour built with PHP, M
 - ✅ Basic CSRF mitigation using POST-only forms
 
 ---
+## Setup Instructions
+
+### Requirements
+- XAMPP (Apache + MySQL)
+- A web browser (Chrome, Firefox, etc.)
+
+### Steps
+
+1. **Install XAMPP**
+   Download and install XAMPP. During installation make sure Apache and MySQL are selected.
+
+2. **Copy the project files**
+   Extract the project zip file. Copy the entire `atp-manager` folder into `C:\xampp\htdocs\atp-manager\` or wherever your XAMPP htdocs is located.
+
+3. **Start XAMPP**
+   Open the XAMPP Control Panel and click Start next to both Apache and MySQL. Both should turn green.
+
+4. **Create the database**
+   Open your browser and go to `http://localhost/phpmyadmin`. On the left sidebar click New, type `atp_manager` as the database name, and click Create.
+
+5. **Import the database**
+   With the `atp_manager` database selected, click the Import tab at the top. Click Choose File, navigate to the project folder, and select `database.sql`. Click Go. You should see a green success message.
+
+6. **Configure the database connection**
+   Open `includes/db.php` in a text editor and check these settings match your XAMPP setup:
+```php
+   define('DB_HOST', 'localhost');
+   define('DB_NAME', 'atp_manager');
+   define('DB_USER', 'root');
+   define('DB_PASS', '');       // leave empty for default XAMPP
+   define('DB_PORT', '3307');   // change to 3306 if that is your MySQL port
+```
+
+7. **Open the application**
+   Go to `http://localhost/atp-manager/` in your browser. The landing page should appear.
+
+8. **Log in**
+   Use any of the pre-loaded accounts to test the app. All accounts use the password: `password`. The admin account email is `admin@atpmanager.com`.
+
+---
